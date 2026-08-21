@@ -101,17 +101,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ---- CORS CONFIGURATION ----
-# REPLACE 'https://your-app-name.vercel.app' with your live Vercel frontend URL once deployed
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5174',
-    'https://your-app-name.vercel.app',
+    'https://policy-pulse-delta.vercel.app',
 ]
 
-# Optional environment toggle to allow all CORS origins during initial integration
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'False') == 'True'
+# Allow all origins so Vercel frontend can freely connect to backend API
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # ---- SMTP EMAIL CONFIGURATION ----
