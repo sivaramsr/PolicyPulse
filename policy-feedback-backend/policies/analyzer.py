@@ -22,8 +22,20 @@ Return strictly valid JSON with these 3 fields:
 
 Return ONLY the raw JSON object."""
 
-        model = genai.GenerativeModel('gemini-3.6-flash')
-        response = model.generate_content(prompt)
+        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        response = None
+        for mname in model_names:
+            try:
+                model = genai.GenerativeModel(mname)
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    break
+            except Exception:
+                continue
+
+        if not response or not response.text:
+            return None
+
         res_text = response.text.strip()
 
         # Remove markdown code formatting if present
