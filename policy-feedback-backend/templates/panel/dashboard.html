@@ -1,0 +1,85 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Dashboard — PolicyPulse Staff Console{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid rgba(212,175,55,0.4); padding-bottom: 1rem;">
+  <div>
+    <h1 style="font-family: 'Great Vibes', cursive; font-size: 3rem; color: #7a0016; margin-bottom: 0.25rem;">Staff Executive Overview</h1>
+    <p style="color: #665247; font-size: 0.95rem;">Real-time summary of state legislative proposals and citizen feedback streams.</p>
+  </div>
+  <a href="{% url 'panel-policy-create' %}" class="btn btn-maroon">+ Add New Policy</a>
+</div>
+
+<!-- Dashboard 3-Column Summary Grid -->
+<div class="dash-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+  <div class="stat-card">
+    <div class="stat-number">{{ total_policies }}</div>
+    <div class="stat-label">Total Policies</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color: #059669;">{{ active_policies }}</div>
+    <div class="stat-label">Active Proposals</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" style="color: #d4af37;">{{ total_comments }}</div>
+    <div class="stat-label">Verified Citizen Comments</div>
+  </div>
+</div>
+
+<!-- Grid with Recent Comments & Policies -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+
+  <!-- Recent Citizen Comments -->
+  <div style="background-color: #fffdf2; border: 2px solid #d4af37; border-radius: 12px; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 0.5rem;">
+      <h3 style="font-family: 'Merriweather', serif; font-size: 1rem; color: #7a0016; text-transform: uppercase;">Latest Citizen Feedback</h3>
+      <a href="{% url 'panel-comment-list' %}" style="color: #7a0016; font-size: 0.85rem; font-weight: 700;">View All →</a>
+    </div>
+
+    {% if recent_comments %}
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for c in recent_comments %}
+          <div style="background-color: #fbf5e6; border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; padding: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <strong style="color: #2a1810; font-size: 0.88rem;">{{ c.author }}</strong>
+              <span class="badge-status {% if c.sentiment == 'Positive' %}badge-pos{% elif c.sentiment == 'Negative' %}badge-neg{% else %}badge-neu{% endif %}">{{ c.sentiment }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #44332a; margin-bottom: 0.35rem;">"{{ c.text|truncatechars:110 }}"</p>
+            <div style="font-size: 0.75rem; color: #665247;">Policy: <em>{{ c.policy.title }}</em></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="font-style: italic; color: #665247;">No citizen feedback recorded yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Active Policies Summary -->
+  <div style="background-color: #fffdf2; border: 2px solid #d4af37; border-radius: 12px; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 0.5rem;">
+      <h3 style="font-family: 'Merriweather', serif; font-size: 1rem; color: #7a0016; text-transform: uppercase;">Active Policy Proposals</h3>
+      <a href="{% url 'panel-policy-list' %}" style="color: #7a0016; font-size: 0.85rem; font-weight: 700;">Manage Policies →</a>
+    </div>
+
+    {% if recent_policies %}
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for p in recent_policies %}
+          <div style="background-color: #fbf5e6; border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; padding: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: #2a1810; font-size: 0.92rem; display: block; margin-bottom: 0.2rem;">{{ p.title }}</strong>
+              <span style="font-size: 0.78rem; color: #665247;">Published: {{ p.published_date }}</span>
+            </div>
+            <div>
+              <a href="{% url 'panel-policy-edit' p.id %}" class="btn btn-gold btn-sm">Edit</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="font-style: italic; color: #665247;">No policy proposals created yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

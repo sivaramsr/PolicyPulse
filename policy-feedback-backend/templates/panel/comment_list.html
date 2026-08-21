@@ -1,0 +1,117 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Manage Citizen Comments — PolicyPulse Staff Console{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid rgba(212,175,55,0.4); padding-bottom: 1rem;">
+  <div>
+    <h1 style="font-family: 'Great Vibes', cursive; font-size: 3rem; color: #7a0016; margin-bottom: 0.25rem;">Citizen Public Feedback</h1>
+    <p style="color: #665247; font-size: 0.95rem;">Review, search, filter, or remove citizen feedback submissions.</p>
+  </div>
+</div>
+
+<!-- Search & Filter Controls Bar with flex-wrap -->
+<form method="get" class="filter-bar">
+  
+  <div class="filter-group" style="flex: 2 1 240px;">
+    <label class="form-label">Search Feedback Content / Author</label>
+    <input type="text" name="q" value="{{ search_q }}" placeholder="Search text, author, reasoning..." class="form-control" />
+  </div>
+
+  <div class="filter-group" style="flex: 1.5 1 200px;">
+    <label class="form-label">Filter by Policy Proposal</label>
+    <select name="policy" class="form-control">
+      <option value="all">-- All Policies --</option>
+      {% for p in all_policies %}
+        <option value="{{ p.id }}" {% if policy_filter == p.id|stringformat:"i" %}selected{% endif %}>{{ p.title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="filter-group" style="flex: 1 1 150px;">
+    <label class="form-label">Filter by Sentiment</label>
+    <select name="sentiment" class="form-control">
+      <option value="all">-- All Sentiments --</option>
+      <option value="Positive" {% if sentiment_filter == "Positive" %}selected{% endif %}>Positive</option>
+      <option value="Neutral" {% if sentiment_filter == "Neutral" %}selected{% endif %}>Neutral / Mixed</option>
+      <option value="Negative" {% if sentiment_filter == "Negative" %}selected{% endif %}>Negative</option>
+    </select>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; align-self: flex-end;">
+    <button type="submit" class="btn btn-maroon">Apply Filters</button>
+    <a href="{% url 'panel-comment-list' %}" class="btn btn-gold">Reset</a>
+  </div>
+
+</form>
+
+<!-- Table Container with strict horizontal scroll isolation & explicit column widths -->
+<div class="table-container">
+  <table class="panel-table" style="min-width: 950px; table-layout: fixed; width: 100%;">
+    <thead>
+      <tr>
+        <th style="width: 70px; white-space: nowrap;">ID</th>
+        <th style="width: 140px;">Citizen Author</th>
+        <th style="width: 180px;">Policy Target</th>
+        <th style="width: 140px;">Sentiment & Pillar</th>
+        <th>Comment Text Snippet</th>
+        <th style="width: 110px;">Submitted</th>
+        <th style="width: 95px; text-align: right; white-space: nowrap;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in page_obj %}
+        <tr>
+          <td style="white-space: nowrap; width: 70px;">
+            <strong style="white-space: nowrap;">#{{ c.id }}</strong>
+          </td>
+          <td>
+            <strong style="color: #2a1810; display: block;" class="cell-truncate" title="{{ c.author }}">{{ c.author }}</strong>
+            {% if c.user %}
+              <div style="font-size: 0.75rem; color: #665247;" class="cell-truncate" title="User: {{ c.user.username }}">@{{ c.user.username }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <strong style="color: #7a0016; font-size: 0.88rem; display: block;" class="cell-truncate" title="{{ c.policy.title }}">{{ c.policy.title }}</strong>
+          </td>
+          <td>
+            <span class="badge-status {% if c.sentiment == 'Positive' %}badge-pos{% elif c.sentiment == 'Negative' %}badge-neg{% else %}badge-neu{% endif %}">
+              {{ c.sentiment }}
+            </span>
+            <div style="font-size: 0.75rem; color: #665247; margin-top: 0.2rem;" class="cell-truncate" title="Pillar: {{ c.issue }}">Pillar: <strong>{{ c.issue }}</strong></div>
+          </td>
+          <td title="Full Comment: {{ c.text }}">
+            <div style="font-size: 0.88rem; color: #2a1810;" class="cell-truncate">"{{ c.text|truncatechars:70 }}"</div>
+            {% if c.why %}
+              <div style="font-size: 0.76rem; color: #065f46; font-style: italic;" class="cell-truncate" title="AI Summary: {{ c.why }}">AI: {{ c.why }}</div>
+            {% endif %}
+          </td>
+          <td style="font-size: 0.8rem; color: #665247; white-space: nowrap;">{{ c.created_at|date:"M d, Y" }}</td>
+          <td style="text-align: right; white-space: nowrap; width: 95px;">
+            <a href="{% url 'panel-comment-delete' c.id %}" class="btn btn-danger btn-sm" style="white-space: nowrap;">Delete</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 2rem; color: #665247;">No citizen feedback found matching the current search filters.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination Row -->
+{% if page_obj.has_other_pages %}
+  <div class="pagination-row">
+    <div>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} (Total: {{ page_obj.paginator.count }} comments)</div>
+    <div style="display: flex; gap: 0.5rem;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ search_q }}&policy={{ policy_filter }}&sentiment={{ sentiment_filter }}" class="btn btn-gold btn-sm">← Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ search_q }}&policy={{ policy_filter }}&sentiment={{ sentiment_filter }}" class="btn btn-gold btn-sm">Next →</a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

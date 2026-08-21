@@ -1,0 +1,29 @@
+{% extends "panel/base.html" %}
+
+{% block title %}Confirm Deletion — PolicyPulse Staff Console{% endblock %}
+
+{% block content %}
+<div style="max-width: 550px; margin: 2rem auto; text-align: center;">
+  <div style="background-color: #fee2e2; border: 2px solid #fecaca; border-radius: 12px; padding: 2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+    
+    <div style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;">⚠️</div>
+    
+    <h2 style="font-family: 'Merriweather', serif; font-size: 1.5rem; color: #991b1b; margin-bottom: 0.75rem;">Confirm Permanent Deletion</h2>
+    
+    <p style="color: #44332a; font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.5;">
+      Are you sure you want to permanently delete <strong>{{ object_name }}</strong>?
+    </p>
+
+    <p style="color: #991b1b; font-size: 0.85rem; font-weight: 700; margin-bottom: 2rem;">
+      This action cannot be undone. All associated data will be removed from the database.
+    </p>
+
+    <form method="post" style="display: flex; gap: 1rem; justify-content: center;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger" style="padding: 0.75rem 1.75rem; font-size: 0.95rem;">Yes, Delete Permanently</button>
+      <a href="{% url cancel_url %}" class="btn btn-gold" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">Cancel</a>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+# Secret environment files
+.env
+*.env
+
+# Python byte-compiled files & virtual environments
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+
+# Django local database & staticfiles
+*.sqlite3
+db.sqlite3
+/policy-feedback-backend/staticfiles/
+
+# Node.js dependencies & build output
+node_modules/
+/policy-feedback-frontend/dist/
+
+# IDE & OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,59 @@
+{% extends "panel/base.html" %}
+
+{% block title %}{{ action }} Policy Proposal — PolicyPulse Staff Console{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem; border-bottom: 2px solid rgba(212,175,55,0.4); padding-bottom: 1rem;">
+    <h1 style="font-family: 'Great Vibes', cursive; font-size: 3rem; color: #7a0016; margin-bottom: 0.25rem;">{{ action }} Policy Proposal</h1>
+    <p style="color: #665247; font-size: 0.95rem;">Configure the policy proposal title, contents, and citizen feedback availability.</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label class="form-label" for="id_title">Policy Proposal Title</label>
+      <input
+        type="text"
+        id="id_title"
+        name="title"
+        class="form-control"
+        placeholder="e.g. Affordable Biryani Shops in Every District"
+        value="{{ policy.title|default:'' }}"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="id_content">Full Policy Description & Objectives</label>
+      <textarea
+        id="id_content"
+        name="content"
+        rows="8"
+        class="form-control"
+        placeholder="Detail the key objectives, financial subsidies, and target beneficiary groups..."
+        required
+      >{{ policy.content|default:'' }}</textarea>
+    </div>
+
+    <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.75rem; background-color: #fbf3df; padding: 1rem; border-radius: 8px; border: 1.5px solid #d4af37;">
+      <input
+        type="checkbox"
+        id="id_is_active"
+        name="is_active"
+        style="width: 20px; height: 20px; accent-color: #7a0016; cursor: pointer;"
+        {% if policy %}{% if policy.is_active %}checked{% endif %}{% else %}checked{% endif %}
+      />
+      <label for="id_is_active" style="cursor: pointer; font-weight: 700; color: #7a0016; font-size: 0.9rem;">
+        Publish as Active Proposal (Visible for citizen participation & feedback)
+      </label>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+      <button type="submit" class="btn btn-maroon" style="padding: 0.85rem 1.75rem; font-size: 0.95rem;">Save Policy Proposal</button>
+      <a href="{% url 'panel-policy-list' %}" class="btn btn-gold" style="padding: 0.85rem 1.5rem; font-size: 0.95rem;">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Royal Red & Gold Palette sampled from reference card */
+  --bg-outer-red: #7a0016;
+  --bg-dark-maroon: #54000e;
+  --bg-ivory: #fffdf2;
+  --bg-ivory-card: #fdf7e7;
+  --bg-ivory-input: #fbf3df;
+  
+  --border-gold: #d4af37;
+  --border-gold-bright: #f3e5ab;
+  --border-gold-dark: #b8860b;
+  --text-dark: #2a1810;
+  --text-maroon: #7a0016;
+  --text-muted: #665247;
+  
+  --font-script: 'Great Vibes', cursive;
+  --font-heading: 'Merriweather', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Sentiment Badges tuned for Ivory Background */
+  --badge-pos-bg: #d1fae5;
+  --badge-pos-text: #065f46;
+  --badge-neg-bg: #fee2e2;
+  --badge-neg-text: #991b1b;
+  --badge-neu-bg: #fef3c7;
+  --badge-neu-text: #92400e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-outer-red);
+  background-image: radial-gradient(circle, rgba(212, 175, 55, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--text-dark);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Script Heading Utility */
+.font-script {
+  font-family: var(--font-script);
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Ornate Border Frame styling */
+.ornate-card {
+  background-color: var(--bg-ivory);
+  border: 3px double var(--border-gold);
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), inset 0 0 15px rgba(212, 175, 55, 0.15);
+  position: relative;
+}
+
+/* Badge classes */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge-positive {
+  background-color: var(--badge-pos-bg);
+  color: var(--badge-pos-text);
+  border: 1px solid #a7f3d0;
+}
+
+.badge-negative {
+  background-color: var(--badge-neg-bg);
+  color: var(--badge-neg-text);
+  border: 1px solid #fecaca;
+}
+
+.badge-neutral {
+  background-color: var(--badge-neu-bg);
+  color: var(--badge-neu-text);
+  border: 1px solid #fde68a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-outer-red);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-gold);
+  border-radius: 5px;
+  border: 2px solid var(--bg-outer-red);
+}

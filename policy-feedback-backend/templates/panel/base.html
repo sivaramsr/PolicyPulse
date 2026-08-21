@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PolicyPulse Staff Console{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'panel/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Royal Red & Gold Header Navbar -->
+  <header class="panel-header">
+    <div class="panel-header-inner">
+      <a href="{% url 'panel-dashboard' %}" class="panel-brand">
+        <div class="panel-brand-title">PolicyPulse</div>
+        <div class="panel-brand-tag">Staff Console</div>
+      </a>
+
+      <nav class="panel-nav">
+        <a href="{% url 'panel-dashboard' %}" class="panel-nav-link {% if request.resolver_match.url_name == 'panel-dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{% url 'panel-policy-list' %}" class="panel-nav-link {% if 'policy' in request.resolver_match.url_name %}active{% endif %}">Policies</a>
+        <a href="{% url 'panel-comment-list' %}" class="panel-nav-link {% if 'comment' in request.resolver_match.url_name %}active{% endif %}">Comments</a>
+        <a href="http://localhost:5173/" class="panel-nav-link" target="_blank">View Live Site ↗</a>
+      </nav>
+
+      <div class="panel-user-area">
+        <span>● {{ request.user.username }} (Staff)</span>
+        <form action="{% url 'panel-logout' %}" method="post" style="display: inline; margin-left: 0.5rem;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-gold btn-sm">Log Out</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ornate Content Container -->
+  <main class="panel-wrapper">
+    <div class="ornate-card">
+
+      {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+          {% for message in messages %}
+            <div style="padding: 0.85rem 1.25rem; border-radius: 8px; font-weight: 600; margin-bottom: 0.5rem; {% if message.tags == 'error' %}background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca;{% else %}background-color: #f0fdf4; color: #065f46; border: 1px solid #a7f3d0;{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+
+    </div>
+  </main>
+
+</body>
+</html>
