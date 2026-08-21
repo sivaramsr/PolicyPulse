@@ -129,7 +129,7 @@ class PasswordResetRequestView(APIView):
                             [user.email or email],
                             fail_silently=True,
                         )
-                        print(f"[PasswordReset] Reset email dispatched to {user.email or email}")
+                        print(f"[PasswordReset DISPATCH LINK]: {reset_url}")
                     except Exception as e:
                         print(f"[PasswordReset Error] Failed to send email: {e}")
 
