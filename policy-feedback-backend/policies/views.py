@@ -102,6 +102,7 @@ class PasswordResetRequestView(APIView):
             user = User.objects.filter(email__iexact=email).first() or User.objects.filter(username__iexact=email).first()
             if user:
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
                 frontend_url = os.getenv('FRONTEND_URL', 'https://policy-pulse-delta.vercel.app').rstrip('/')
                 reset_url = f"{frontend_url}/reset-password/{uidb64}/{token}/"
 
