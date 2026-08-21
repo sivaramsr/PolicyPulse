@@ -102,8 +102,8 @@ class PasswordResetRequestView(APIView):
             user = User.objects.filter(email__iexact=email).first() or User.objects.filter(username__iexact=email).first()
             if user:
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                reset_url = f"http://localhost:5173/reset-password/{uidb64}/{token}/"
+                frontend_url = os.getenv('FRONTEND_URL', 'https://policy-pulse-delta.vercel.app').rstrip('/')
+                reset_url = f"{frontend_url}/reset-password/{uidb64}/{token}/"
 
                 subject = "PolicyPulse — Reset Your Account Password"
                 message = f"Hello {user.username},\n\nA password reset request was received for your PolicyPulse citizen account.\n\nPlease click the link below to set a new password:\n{reset_url}\n\nIf you did not request this reset, please ignore this email.\n\nGovernment of Tamil Nadu — PolicyPulse Team"
