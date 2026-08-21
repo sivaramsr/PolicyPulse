@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import OrnateFrame from '../components/OrnateFrame';
-
-const API_BASE = 'http://127.0.0.1:8001/api';
+import { API_BASE } from '../config';
 
 export default function ResetPasswordPage() {
   const { uidb64, token } = useParams();

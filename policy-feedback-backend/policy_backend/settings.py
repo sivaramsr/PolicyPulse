@@ -4,7 +4,7 @@ import dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file credentials
+# Load .env file credentials if present locally or on server
 env_file = BASE_DIR / 'policy_backend' / '.env'
 if env_file.exists():
     dotenv.load_dotenv(env_file, override=True)
@@ -12,12 +12,21 @@ elif (BASE_DIR / '.env').exists():
     dotenv.load_dotenv(BASE_DIR / '.env', override=True)
 
 
+# ---- PRODUCTION SECURITY & ENVIRONMENT VARIABLES ----
+# Secret key read from environment variable (falls back to dev key if not set)
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-policy-feedback-dev-key-2024')
 
-SECRET_KEY = 'django-insecure-policy-feedback-dev-key-2024'
+# DEBUG controlled by environment variable (defaults to False for production safety)
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS for PythonAnywhere production deployment
+# REPLACE 'yourusername' below with your actual PythonAnywhere account username
+ALLOWED_HOSTS = [
+    'yourusername.pythonanywhere.com',
+    'localhost',
+    '127.0.0.1',
+    '*', # Retained during initial setup; restrict to your username domain in production
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -35,7 +44,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',   # must be first
+    'corsheaders.middleware.CorsMiddleware',   # must be first for CORS headers
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -84,21 +93,28 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
+# Static files (CSS, JavaScript, Images) for collectstatic on PythonAnywhere
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# ---- CORS: allow React dev server ----
+# ---- CORS CONFIGURATION ----
+# REPLACE 'https://your-app-name.vercel.app' with your live Vercel frontend URL once deployed
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5174',
+    'https://your-app-name.vercel.app',
 ]
 
-# ---- Real Gmail SMTP Email Configuration ----
+# Optional environment toggle to allow all CORS origins during initial integration
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'False') == 'True'
+
+
+# ---- SMTP EMAIL CONFIGURATION ----
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -108,9 +124,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = f'Tamil Nadu Policy Portal <{EMAIL_HOST_USER}>'
 
 
-
-
-# ---- DRF & SimpleJWT settings ----
+# ---- DRF & SIMPLEJWT SETTINGS ----
 from datetime import timedelta
 
 SIMPLE_JWT = {
@@ -131,4 +145,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }
-

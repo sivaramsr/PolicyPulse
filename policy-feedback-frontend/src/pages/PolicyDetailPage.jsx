@@ -3,8 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import OrnateFrame from '../components/OrnateFrame';
 import LoadingScreen from '../components/LoadingScreen';
-
-const API_BASE = 'http://127.0.0.1:8001/api';
+import { API_BASE } from '../config';
 
 // Icons
 const CheckIcon = () => (
