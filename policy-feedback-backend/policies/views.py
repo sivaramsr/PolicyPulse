@@ -20,18 +20,27 @@ from rest_framework.permissions import AllowAny
 def api_root(request, format=None):
     """GET /api/ — Interactive API Root Index listing all available PolicyPulse REST endpoints."""
     return Response({
-        'message': 'Welcome to PolicyPulse REST API Root',
-        'auth_register': request.build_absolute_uri('/api/auth/register/'),
-        'auth_login': request.build_absolute_uri('/api/auth/login/'),
-        'auth_me': request.build_absolute_uri('/api/auth/me/'),
-        'policies': request.build_absolute_uri('/api/policies/'),
+        'message': 'Welcome to PolicyPulse Government API',
+        'auth_endpoints': {
+            'register': '/api/auth/register/',
+            'login': '/api/auth/login/',
+            'me': '/api/auth/me/',
+            'token_refresh': '/api/auth/token/refresh/',
+            'password_reset': '/api/auth/password-reset/',
+            'password_reset_confirm': '/api/auth/password-reset-confirm/',
+        },
+        'policy_endpoints': {
+            'list_policies': '/api/policies/',
+            'detail_policy': '/api/policies/<id>/',
+            'policy_comments': '/api/policies/<id>/comments/',
+            'policy_metrics': '/api/policies/<id>/metrics/',
+        },
+        'staff_panel': '/panel/'
     })
 
 
-# ── Auth Endpoints ────────────────────────────────────────────────
-
 class RegisterView(APIView):
-    """POST /api/auth/register/ — Register a new citizen account."""
+    """POST /api/auth/register/ — Register new citizen user account."""
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -50,32 +59,34 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-    """POST /api/auth/login/ — Login and receive JWT token pair."""
+    """POST /api/auth/login/ — Obtain JWT tokens for citizen login."""
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         username = request.data.get('username', '').strip()
-        password = request.data.get('password', '').strip()
+        password = request.data.get('password', '')
 
-        if not username or not password:
-            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Match by email or username
+        if '@' in username:
+            matched_user = User.objects.filter(email__iexact=username).first()
+            if matched_user:
+                username = matched_user.username
 
         user = authenticate(username=username, password=password)
-        if user is None:
-            return Response({'error': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'user': UserSerializer(user).data,
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
-        })
+        if user:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'user': UserSerializer(user).data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            })
+        return Response({'error': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CurrentUserView(APIView):
-    """GET /api/auth/me/ — Get current authenticated user profile."""
+    """GET /api/auth/me/ — Get current authenticated citizen details."""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -96,35 +107,40 @@ class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        if email:
-            # Match by email or username
-            user = User.objects.filter(email__iexact=email).first() or User.objects.filter(username__iexact=email).first()
-            if user:
-                uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                frontend_url = os.getenv('FRONTEND_URL', 'https://policy-pulse-delta.vercel.app').rstrip('/')
-                reset_url = f"{frontend_url}/reset-password/{uidb64}/{token}/"
+        try:
+            email = request.data.get('email', '').strip().lower()
+            if email:
+                # Match by email or username
+                user = User.objects.filter(email__iexact=email).first() or User.objects.filter(username__iexact=email).first()
+                if user:
+                    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    frontend_url = os.getenv('FRONTEND_URL', 'https://policy-pulse-delta.vercel.app').rstrip('/')
+                    reset_url = f"{frontend_url}/reset-password/{uidb64}/{token}/"
 
-                subject = "PolicyPulse — Reset Your Account Password"
-                message = f"Hello {user.username},\n\nA password reset request was received for your PolicyPulse citizen account.\n\nPlease click the link below to set a new password:\n{reset_url}\n\nIf you did not request this reset, please ignore this email.\n\nGovernment of Tamil Nadu — PolicyPulse Team"
-                
-                try:
-                    send_mail(
-                        subject,
-                        message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [user.email or email],
-                        fail_silently=False,
-                    )
-                    print(f"[PasswordReset] Reset email dispatched to {user.email or email}")
-                except Exception as e:
-                    print(f"[PasswordReset Error] Failed to send email: {e}")
+                    subject = "PolicyPulse — Reset Your Account Password"
+                    message = f"Hello {user.username},\n\nA password reset request was received for your PolicyPulse citizen account.\n\nPlease click the link below to set a new password:\n{reset_url}\n\nIf you did not request this reset, please ignore this email.\n\nGovernment of Tamil Nadu — PolicyPulse Team"
+                    
+                    try:
+                        send_mail(
+                            subject,
+                            message,
+                            settings.DEFAULT_FROM_EMAIL,
+                            [user.email or email],
+                            fail_silently=True,
+                        )
+                        print(f"[PasswordReset] Reset email dispatched to {user.email or email}")
+                    except Exception as e:
+                        print(f"[PasswordReset Error] Failed to send email: {e}")
 
-        # Always return generic success message to prevent email enumeration
-        return Response({
-            'detail': 'If an account with that email exists, a password reset link has been sent.'
-        }, status=status.HTTP_200_OK)
+            return Response({
+                'detail': 'If an account with that email exists, a password reset link has been sent.'
+            }, status=status.HTTP_200_OK)
+        except Exception as main_e:
+            print(f"[PasswordReset Exception]: {main_e}")
+            return Response({
+                'detail': 'If an account with that email exists, a password reset link has been sent.'
+            }, status=status.HTTP_200_OK)
 
 
 class PasswordResetConfirmView(APIView):
@@ -132,47 +148,41 @@ class PasswordResetConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        uidb64 = request.data.get('uidb64', '').strip()
-        token = request.data.get('token', '').strip()
-        new_password = request.data.get('new_password', '').strip()
+        uidb64 = request.data.get('uidb64', '')
+        token = request.data.get('token', '')
+        new_password = request.data.get('password', '')
 
         if not uidb64 or not token or not new_password:
-            return Response({'error': 'Missing required fields (uidb64, token, new_password).'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if len(new_password) < 6:
-            return Response({'error': 'Password must be at least 6 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Missing reset token or new password.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return Response({'error': 'Invalid reset link or user account not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            user = None
 
-        if not default_token_generator.check_token(user, token):
-            return Response({'error': 'The password reset token is invalid or has expired. Please request a new link.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user.set_password(new_password)
-        user.save()
-
-        return Response({
-            'detail': 'Your password has been reset successfully. You may now sign in.'
-        }, status=status.HTTP_200_OK)
+        if user is not None and default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response({'detail': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid or expired password reset link.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── Policy Endpoints ──────────────────────────────────────────────
+# ── Policy Endpoints ─────────────────────────────────────────────
 
 class PolicyListView(APIView):
-    """GET /api/policies/ — List all active policies."""
+    """GET /api/policies/ — Active legislative policies for public frontend."""
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        policies = Policy.objects.filter(is_active=True)
+        policies = Policy.objects.filter(is_active=True).order_by('-published_date')
         serializer = PolicySerializer(policies, many=True)
         return Response(serializer.data)
 
 
 class PolicyDetailView(APIView):
-    """GET /api/policies/<id>/ — Single policy with all its comments."""
+    """GET /api/policies/<id>/ — Single policy with all its details."""
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, pk):
@@ -306,41 +316,36 @@ class CommentListCreateView(APIView):
 # ── Dashboard metrics endpoint ────────────────────────────────────
 
 class PolicyMetricsView(APIView):
+    """GET /api/policies/<id>/metrics/ — Public sentiment dashboard stats for charts."""
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, policy_id):
-        policy = get_object_or_404(Policy, id=policy_id, is_active=True)
+    def get(self, request, pk):
+        policy = get_object_or_404(Policy, pk=pk, is_active=True)
         comments = Comment.objects.filter(policy=policy)
-        total = comments.count()
 
-        if total == 0:
-            return Response({
-                'total': 0,
-                'positive_pct': 0,
-                'neutral_pct': 0,
-                'negative_pct': 0,
-                'issue_counts': {},
-                'reasons_for_support': [],
-                'concerns': [],
-            })
+        total_responses = comments.count()
 
-        pos = comments.filter(sentiment='Positive').count()
-        neu = comments.filter(sentiment__in=['Neutral', 'Mixed']).count()
-        neg = comments.filter(sentiment='Negative').count()
+        # Sentiment counts
+        positive_count = comments.filter(sentiment='Positive').count()
+        negative_count = comments.filter(sentiment='Negative').count()
+        mixed_count = comments.filter(sentiment__in=['Mixed', 'Neutral']).count()
 
-        issue_counts = {}
-        for issue_choice, _ in Comment.ISSUE_CHOICES:
-            issue_counts[issue_choice] = comments.filter(issue=issue_choice).count()
-
-        support_qs = comments.filter(sentiment='Positive').values('author', 'why')[:4]
-        concerns_qs = comments.filter(sentiment__in=['Negative', 'Mixed']).values('author', 'why')[:4]
+        # Issue pillar breakdown
+        from django.db.models import Count
+        issues_breakdown = list(
+            comments.values('issue')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
 
         return Response({
-            'total': total,
-            'positive_pct': round((pos / total) * 100),
-            'neutral_pct': round((neu / total) * 100),
-            'negative_pct': round((neg / total) * 100),
-            'issue_counts': issue_counts,
-            'reasons_for_support': list(support_qs),
-            'concerns': list(concerns_qs),
+            'policy_id': policy.id,
+            'policy_title': policy.title,
+            'total_responses': total_responses,
+            'sentiment': {
+                'positive': positive_count,
+                'negative': negative_count,
+                'mixed': mixed_count,
+            },
+            'issues_breakdown': issues_breakdown
         })
