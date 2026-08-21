@@ -324,14 +324,24 @@ class PolicyMetricsView(APIView):
         policy = get_object_or_404(Policy, pk=pk, is_active=True)
         comments = Comment.objects.filter(policy=policy)
 
-        total_responses = comments.count()
+        total = comments.count()
 
-        # Sentiment counts
-        positive_count = comments.filter(sentiment='Positive').count()
-        negative_count = comments.filter(sentiment='Negative').count()
-        mixed_count = comments.filter(sentiment__in=['Mixed', 'Neutral']).count()
+        pos = comments.filter(sentiment='Positive').count()
+        neg = comments.filter(sentiment='Negative').count()
+        mix = comments.filter(sentiment__in=['Mixed', 'Neutral']).count()
 
-        # Issue pillar breakdown
+        if total > 0:
+            pos_pct = round((pos / total) * 100)
+            neg_pct = round((neg / total) * 100)
+            mix_pct = max(0, 100 - pos_pct - neg_pct)
+        else:
+            pos_pct, neg_pct, mix_pct = 0, 0, 0
+
+        # Issue pillar dict + list
+        issue_counts = {}
+        for c in comments:
+            issue_counts[c.issue] = issue_counts.get(c.issue, 0) + 1
+
         from django.db.models import Count
         issues_breakdown = list(
             comments.values('issue')
@@ -342,11 +352,15 @@ class PolicyMetricsView(APIView):
         return Response({
             'policy_id': policy.id,
             'policy_title': policy.title,
-            'total_responses': total_responses,
+            'total_responses': total,
+            'positive_pct': pos_pct,
+            'neutral_pct': mix_pct,
+            'negative_pct': neg_pct,
+            'issue_counts': issue_counts,
             'sentiment': {
-                'positive': positive_count,
-                'negative': negative_count,
-                'mixed': mixed_count,
+                'positive': pos,
+                'negative': neg,
+                'mixed': mix,
             },
             'issues_breakdown': issues_breakdown
         })
