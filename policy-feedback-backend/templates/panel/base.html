@@ -22,7 +22,7 @@
         <a href="{% url 'panel-dashboard' %}" class="panel-nav-link {% if request.resolver_match.url_name == 'panel-dashboard' %}active{% endif %}">Dashboard</a>
         <a href="{% url 'panel-policy-list' %}" class="panel-nav-link {% if 'policy' in request.resolver_match.url_name %}active{% endif %}">Policies</a>
         <a href="{% url 'panel-comment-list' %}" class="panel-nav-link {% if 'comment' in request.resolver_match.url_name %}active{% endif %}">Comments</a>
-        <a href="http://localhost:5173/" class="panel-nav-link" target="_blank">View Live Site ↗</a>
+        <a href="https://policy-pulse-delta.vercel.app/" class="panel-nav-link" target="_blank">View Live Site ↗</a>
       </nav>
 
       <div class="panel-user-area">
