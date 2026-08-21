@@ -151,7 +151,7 @@ class PasswordResetConfirmView(APIView):
     def post(self, request):
         uidb64 = request.data.get('uidb64', '')
         token = request.data.get('token', '')
-        new_password = request.data.get('password', '')
+        new_password = request.data.get('new_password') or request.data.get('password', '')
 
         if not uidb64 or not token or not new_password:
             return Response({'error': 'Missing reset token or new password.'}, status=status.HTTP_400_BAD_REQUEST)
