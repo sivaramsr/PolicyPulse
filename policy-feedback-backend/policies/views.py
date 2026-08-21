@@ -320,9 +320,10 @@ class PolicyMetricsView(APIView):
     """GET /api/policies/<id>/metrics/ — Public sentiment dashboard stats for charts."""
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, pk):
+    def get(self, request, policy_id=None, pk=None, **kwargs):
+        target_id = policy_id or pk
         try:
-            policy = get_object_or_404(Policy, pk=pk, is_active=True)
+            policy = get_object_or_404(Policy, pk=target_id, is_active=True)
             comments = Comment.objects.filter(policy=policy)
 
             total = comments.count()
@@ -360,7 +361,7 @@ class PolicyMetricsView(APIView):
         except Exception as e:
             print(f"[PolicyMetrics Error]: {e}")
             return Response({
-                'policy_id': int(pk),
+                'policy_id': int(target_id or 1),
                 'policy_title': 'Policy Analytics',
                 'total_responses': 0,
                 'positive_pct': 0,
