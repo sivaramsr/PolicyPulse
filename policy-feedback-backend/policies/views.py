@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
 from .models import Policy, Comment
+from .analyzer import analyze_comment
 from .serializers import (
     PolicySerializer, PolicyDetailSerializer, CommentSerializer,
     UserSerializer, RegisterSerializer
@@ -251,38 +252,54 @@ class CommentListCreateView(APIView):
         })
 
     def post(self, request, policy_id):
-        policy = get_object_or_404(Policy, id=policy_id, is_active=True)
+        try:
+            policy = get_object_or_404(Policy, id=policy_id, is_active=True)
 
-        text = request.data.get('text', '').strip()
-        author_input = request.data.get('author', '').strip()
-        author = author_input or request.user.username or 'Verified Citizen'
+            text = request.data.get('text', '').strip()
+            author_input = request.data.get('author', '').strip()
+            author = author_input or getattr(request.user, 'username', 'Verified Citizen')
 
-        if not text:
-            return Response({'error': 'Comment text is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not text:
+                return Response({'error': 'Comment text is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # STRICT LIMIT: 1 Comment per Logged-in User per Policy
-        existing = Comment.objects.filter(policy=policy, user=request.user).exists()
-        if existing:
-            return Response(
-                {'error': 'You have already submitted feedback for this policy proposal.'},
-                status=status.HTTP_400_BAD_REQUEST
+            # STRICT LIMIT: 1 Comment per Logged-in User per Policy
+            if request.user and request.user.is_authenticated:
+                existing = Comment.objects.filter(policy=policy, user=request.user).exists()
+                if existing:
+                    return Response(
+                        {'error': 'You have already submitted feedback for this policy proposal.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Run AI analysis server-side (Gemini 3.6 Flash with fallback)
+            analysis = analyze_comment(text)
+            if not isinstance(analysis, dict):
+                analysis = {
+                    'sentiment': 'Neutral',
+                    'issue': 'General',
+                    'why': (text[:50] + "...") if len(text) > 50 else text
+                }
+
+            user_obj = request.user if (request.user and request.user.is_authenticated) else None
+
+            comment = Comment.objects.create(
+                policy=policy,
+                user=user_obj,
+                author=author,
+                text=text,
+                sentiment=analysis.get('sentiment', 'Neutral'),
+                issue=analysis.get('issue', 'General'),
+                why=analysis.get('why', ''),
             )
 
-        # Run AI analysis server-side (Gemini 3.6 Flash with fallback)
-        analysis = analyze_comment(text)
-
-        comment = Comment.objects.create(
-            policy=policy,
-            user=request.user,
-            author=author,
-            text=text,
-            sentiment=analysis['sentiment'],
-            issue=analysis['issue'],
-            why=analysis['why'],
-        )
-
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = CommentSerializer(comment)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(f"[CommentCreate Error] Exception: {e}")
+            return Response(
+                {'error': f'Failed to record comment: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # ── Dashboard metrics endpoint ────────────────────────────────────
